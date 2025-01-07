@@ -5,6 +5,7 @@ pipeline {
         GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
         BRANCH = 'main'  // Your branch name
         CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID
+        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3'  // Adjust this path to your JMeter installation
     }
 
     stages {
@@ -13,6 +14,16 @@ pipeline {
                 echo 'Cloning the Git repository...'
                 // Cloning the specified branch from the repository and using the credentials
                 git branch: "${BRANCH}", url: "${GIT_REPO}", credentialsId: "${CREDENTIALS_ID}"
+            }
+        }
+
+        stage('Test JMeter') {
+            steps {
+                echo 'Running JMeter tests...'
+                // Running JMeter tests with the .jmx file after cloning
+                bat """
+                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${WORKSPACE}/Test.jmx" -l "${WORKSPACE}/results.jtl" -JDuration=1 -Jusers=3 -JCSVFilePath="${WORKSPACE}/input.csv"
+                """
             }
         }
     }
