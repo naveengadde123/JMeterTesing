@@ -22,7 +22,7 @@ pipeline {
                 echo 'Running JMeter tests...'
                 // Running JMeter tests with the .jmx file after cloning
                 bat """
-                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${WORKSPACE}/Test.jmx" -l "${WORKSPACE}/results.jtl" -JDuration=1 -Jusers=3 -JCSVFilePath="${WORKSPACE}/input.csv"
+                    "${JMETER_HOME}/bin/jmeter.bat"
                 """
             }
         }
