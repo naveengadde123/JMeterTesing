@@ -5,7 +5,7 @@ pipeline {
         GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
         BRANCH = 'main'  // Your branch name
         CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID
-        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3'  // Adjust this path to your JMeter installation
+        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'  // Adjust this path to your JMeter installation
     }
 
     stages {
