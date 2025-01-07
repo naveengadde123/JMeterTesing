@@ -4,8 +4,7 @@ pipeline {
     environment {
         GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
         BRANCH = 'main'  // Your branch name
-        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID (no colon)
-        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3'  // Adjust path to your JMeter installation if necessary
+        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID
     }
 
     stages {
@@ -15,42 +14,6 @@ pipeline {
                 // Cloning the specified branch from the repository and using the credentials
                 git branch: "${BRANCH}", url: "${GIT_REPO}", credentialsId: "${CREDENTIALS_ID}"
             }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building the project...'
-                // Add your build commands here, e.g., for Maven, Gradle, npm, etc.
-                // Example for Maven:
-                sh 'mvn clean install'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Running JMeter tests...'
-                // Running JMeter tests with your Test.jmx file
-                bat """
-                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${WORKSPACE}/Test.jmx" -l "${WORKSPACE}/results.jtl" -JDuration=1 -Jusers=3 -JCSVFilePath="${WORKSPACE}/input.csv"
-                """
-            }
-        }
-
-        stage('Publish Report') {
-            steps {
-                echo 'Publishing JMeter performance report...'
-                // Publish the performance report based on the .jtl file
-                perfReport filterRegex: '', sourceDataFiles: '**/*.jtl'
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
