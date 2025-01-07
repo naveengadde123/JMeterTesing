@@ -1,28 +1,44 @@
 pipeline {
     agent any
 
+    environment {
+        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
+        BRANCH = 'main'  // Your branch name
+        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3'  // Adjust path to your JMeter installation if necessary
+    }
+
     stages {
         stage('Clone Repository') {
             steps {
-                echo 'Cloning the repository...'
-                git branch: 'main', credentialsId: '1d54e951-e865-4582-a541-e726548cfefd', url: 'https://github.com/naveengadde123/JMeterTesing.git'
+                echo 'Cloning the Git repository...'
+                git branch: "${BRANCH}", url: "${GIT_REPO}"  // Cloning the specified branch from the repository
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the project...'
+                // Add your build commands here, e.g., for Maven, Gradle, npm, etc.
+                // Example for Maven:
+                sh 'mvn clean install'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running JMeter tests...'
-                // Run JMeter tests on Windows
-                bat '''
-                    "C:\\JMeter\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\jmeter.bat" -n -t "C:\\JMeter\\apache-jmeter-5.6.3\\apache-jmeter-5.6.3\\bin\\Test.jmx" -l "C:\\Training\\results.jtl" -JDuration=1 -Jusers=3 -JCSVFilePath="C:\\Training\\input.csv"
-                '''
+                // Running JMeter tests with your Test.jmx file
+                bat """
+                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${WORKSPACE}/Test.jmx" -l "${WORKSPACE}/results.jtl" -JDuration=1 -Jusers=3 -JCSVFilePath="${WORKSPACE}/input.csv"
+                """
             }
         }
 
         stage('Publish Report') {
             steps {
-                echo 'Publishing performance report...'
-                perfReport filterRegex: '', sourceDataFiles: 'C:\\Training\\results.jtl'
+                echo 'Publishing JMeter performance report...'
+                // Publish the performance report based on the .jtl file
+                perfReport filterRegex: '', sourceDataFiles: '**/*.jtl'
             }
         }
     }
