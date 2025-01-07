@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
-        BRANCH = 'main'  // Your branch name
-        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID
-        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'  // Path to JMeter installation
-        JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'  // Path to the .jmx file
-        RESULTS_FILE = 'C:/Training/results.jtl'  // Path to store the results
+        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  
+        BRANCH = 'main'  
+        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  
+        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'  
+        JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'  
+        RESULTS_FILE = 'C:/Training/results.jtl'  
     }
 
     stages {
