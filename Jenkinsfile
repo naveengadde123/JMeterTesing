@@ -32,21 +32,20 @@ pipeline {
             steps {
                 echo 'Checking test results for failures...'
                 script {
-                    def failed = false
                     def failedAPIs = []
-
                     def results = readFile(file: "${RESULTS_FILE}").split('\n')
+
                     for (line in results) {
                         if (line.contains('false')) {  // Assuming 'false' in the line indicates a failure
-                            failed = true
                             def apiDetails = line.split(',')  // Adjust split logic based on JMeter result file format
-                            failedAPIs.add("API: ${apiDetails[2]} | Reason: ${apiDetails[4]}") // Update index based on file
+                            failedAPIs.add("API: ${apiDetails[2]} | Reason: ${apiDetails[4]}")  // Update index based on file
                         }
                     }
 
-                    if (failed) {
-                        writeFile(file: "${ERROR_LOG}", text: failedAPIs.join('\n'))
-                        error("One or more APIs failed. Details logged to ${ERROR_LOG}.")
+                    if (!failedAPIs.isEmpty()) {
+                        def errorDetails = failedAPIs.join('\n')
+                        writeFile(file: "${ERROR_LOG}", text: errorDetails)
+                        error("One or more APIs failed:\n${errorDetails}")
                     } else {
                         echo 'All APIs passed successfully.'
                     }
