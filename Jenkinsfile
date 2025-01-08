@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'
-        BRANCH = 'main'
-        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'
-        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
-        JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
-        RESULTS_FILE = 'C:/Training/results.jtl'
-        ERROR_LOG = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/jmeter.log'
+        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'  // Your GitHub repository URL
+        BRANCH = 'main'  // Your branch name
+        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'  // Your credentials ID
+        JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'  // Path to JMeter installation
+        JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'  // Path to the .jmx file
+        RESULTS_FILE = 'C:/Training/results.jtl'  // Path to store the results
+        ERROR_LOG = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/jmeter.log'  // Path to store error details
     }
 
     stages {
@@ -33,20 +33,14 @@ pipeline {
                 echo 'Checking test results for failures...'
                 script {
                     def results = readFile(file: "${RESULTS_FILE}").split('\\n')
-                    def errorCount = 0
-                    def errorDetails = []
 
-                    results.each { line ->
-                        if (line.contains('false')) {
-                            errorCount++
-                            def apiDetails = line.split(',')
-                            errorDetails << "API: ${apiDetails[2]} | Reason: ${apiDetails[4]}"
+                    for (line in results) {
+                        if (line.contains('false')) {  // Assuming 'false' in the line indicates a failure
+                            def apiDetails = line.split(',')  // Adjust split logic based on JMeter result file format
+                            def errorDetails = "API: ${apiDetails[2]} | Reason: ${apiDetails[4]}"  // Update index based on file
+                            writeFile(file: "${ERROR_LOG}", text: errorDetails)
+                            error("Pipeline terminated due to API failure:\\n${errorDetails}")
                         }
-                    }
-
-                    if (errorCount > 0) {
-                        writeFile(file: "${ERROR_LOG}", text: errorDetails.join("\n"))
-                        error("Pipeline terminated due to ${errorCount} API failure(s):\n${errorDetails.join("\n")}")
                     }
 
                     echo 'All APIs passed successfully.'
@@ -63,9 +57,6 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'Pipeline execution completed.'
-        }
         success {
             echo 'Pipeline completed successfully!'
         }
@@ -73,7 +64,7 @@ pipeline {
             echo 'Pipeline failed. Please check the logs.'
             script {
                 if (fileExists("${ERROR_LOG}")) {
-                    echo "Error details:\n" + readFile(file: "${ERROR_LOG}")
+                    echo "Error details:\\n" + readFile(file: "${ERROR_LOG}")
                 }
             }
         }
