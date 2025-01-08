@@ -35,18 +35,20 @@ pipeline {
                     def results = readFile(file: "${RESULTS_FILE}").split('\\n')
 
                     def failedTests = false
+                    def failureDetails = []
+
                     for (line in results) {
                         if (line.contains('false')) {
                             def apiDetails = line.split(',')
                             def errorDetails = "API: ${apiDetails[2]} | Reason: ${apiDetails[4]}"  
-                            writeFile(file: "${ERROR_LOG}", text: errorDetails)
+                            failureDetails.add(errorDetails)
                             failedTests = true
-                            break
                         }
                     }
 
                     if (failedTests) {
-                        error("Pipeline terminated due to API failure:\\n${readFile(file: "${ERROR_LOG}")}")
+                        writeFile(file: "${ERROR_LOG}", text: failureDetails.join('\n'))
+                        error("Pipeline terminated due to API failure:\\n${failureDetails.join('\\n')}")
                     } else {
                         echo 'All APIs passed successfully.'
                     }
