@@ -51,7 +51,7 @@ pipeline {
         stage('Publish Report') {
             steps {
                 echo 'Publishing performance report...'
-                perfReport filterRegex: '', sourceDataFiles: "${RESULTS_FILE}"
+                perfReport filterRegex: '', sourceDataFiles: "${RESULTS_FILE}", type: 'jtl'
             }
         }
     }
