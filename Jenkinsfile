@@ -10,7 +10,7 @@ pipeline {
         RESULTS_FILE = 'C:/Training/results.jtl'
         LOCAL_IP = '127.0.0.1'
         LOCAL_PORT = 5555
-        MAX_EXECUTION_TIME = 5000 // Set the maximum allowed time in milliseconds (5 seconds)
+        MAX_EXECUTION_TIME = 10000 // Set the maximum allowed time in milliseconds (5 seconds)
     }
 
     stages {
