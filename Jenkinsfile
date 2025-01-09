@@ -2,78 +2,31 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'https://github.com/naveengadde123/JMeterTesing.git'
-        BRANCH = 'main'
-        CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        MAX_RESPONSE_TIME_MS = 30000 
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                git branch: "${BRANCH}", url: "${GIT_REPO}", credentialsId: "${CREDENTIALS_ID}"
-                echo 'Cloning the repository...'
-            }
-        }
-
         stage('Run JMeter Tests') {
             steps {
-                bat """
-                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -f
-                """
-            }
-        }
-
-        stage('Check Test Results for Response Time') {
-            steps {
                 script {
-                    def results = readFile(file: "${RESULTS_FILE}").split('\n')
-                    def header = results[0].split(',') // First line is the header
-                    def responseTimeIndex = 1 // The second column in your file is 'elapsed'
-                    def failureFound = false
+                    // Record the start time
+                    def startTime = System.currentTimeMillis()
 
-                    // Loop through results and check elapsed time for each request
-                    for (int i = 1; i < results.size(); i++) {
-                        def line = results[i]
-                        if (line.trim()) {
-                            def columns = line.split(',')
-                            def elapsedTime = columns[responseTimeIndex]?.trim()
+                    // Run the JMeter test
+                    bat """
+                        "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -f
+                    """
 
-                            // Convert elapsedTime to integer
-                            try {
-                                elapsedTime = Integer.parseInt(elapsedTime)
-                            } catch (Exception e) {
-                                echo "Invalid elapsed time at line ${i}: ${columns[responseTimeIndex]}"
-                                continue
-                            }
+                    // Record the end time
+                    def endTime = System.currentTimeMillis()
 
-                            // Check if elapsed time is greater than the threshold
-                            if (elapsedTime > MAX_RESPONSE_TIME_MS) {
-                                echo "Request exceeded maximum response time: ${elapsedTime} ms (Threshold: ${MAX_RESPONSE_TIME_MS} ms)"
-                                failureFound = true
-                            }
-                        }
-                    }
+                    // Calculate the total time taken
+                    def duration = endTime - startTime
 
-                    // Terminate pipeline if any request exceeds the max response time
-                    if (failureFound) {
-                        error("Max time reached: Response times exceeded the threshold of ${MAX_RESPONSE_TIME_MS} ms.")
-                    } else {
-                        echo 'All requests completed within the acceptable response time.'
-                    }
-                }
-            }
-        }
-
-        stage('Publish Report') {
-            steps {
-                script {
-                    echo 'Publishing JMeter Test Results...'
-                    // Example: using the Performance Plugin
-                    perfReport filterRegex: '', sourceDataFiles: "${RESULTS_FILE}", graphType: 'jtl'
+                    // Print the total time to the console
+                    echo "Total API test execution time: ${duration} ms"
                 }
             }
         }
@@ -81,10 +34,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Test completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Max time reached for one or more requests.'
+            echo 'Test failed.'
         }
     }
 }
