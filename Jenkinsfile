@@ -33,7 +33,7 @@ pipeline {
                     duration = Long.parseLong(duration.toString())
 
                     // Compare the duration with the maximum allowed time
-                    if (duration > MAX_EXECUTION_TIME) {
+                    if (duration < MAX_EXECUTION_TIME) {
                         error "Test execution time exceeded the maximum allowed time of ${MAX_EXECUTION_TIME} ms. Terminating the pipeline."
                     }
                 }
