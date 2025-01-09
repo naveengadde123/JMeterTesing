@@ -8,8 +8,7 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        LOCAL_IP = '127.0.0.1'
-        LOCAL_PORT = 5555
+        MAX_RESPONSE_TIME_MS = 10000 // 10 seconds in milliseconds
     }
 
     stages {
@@ -20,52 +19,43 @@ pipeline {
             }
         }
 
-        stage('Check Connection to Localhost') {
-            steps {
-                script {
-                    def connectionResult = bat(script: """
-                        powershell -Command "Test-NetConnection -ComputerName localhost -Port ${LOCAL_PORT}"
-                    """, returnStdout: true).trim()
-
-                    if (connectionResult.contains('TcpTestSucceeded : True')) {
-                        echo "Connection to localhost:5555 is successful!"
-                    } else {
-                        error "Failed to connect to localhost:5555"
-                    }
-                }
-            }
-        }
-
         stage('Run JMeter Tests') {
             steps {
                 bat """
-                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -Jusers=3 -Jserver.host=${LOCAL_IP} -f
+                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -f
                 """
             }
         }
 
-        stage('Check Test Results') {
+        stage('Check Test Results for Response Time') {
             steps {
                 script {
                     def results = readFile(file: "${RESULTS_FILE}").split('\\n')
+                    def header = results[0].split(',')
+                    def responseTimeIndex = header.findIndexOf { it.trim() == 'elapsed' } 
                     def failureFound = false
-                    for (line in results) {
-                        if (line.contains('false') || line.contains('500') || line.contains('404')) {
-                            def apiDetails = line.split(',')
-                            def requestName = apiDetails[0]
-                            def status = apiDetails[1]
-                            def errorMessage = apiDetails[3]
-                            def responseMessage = apiDetails[4]
-                            def failureMessage = apiDetails[5]
-                            def errorDetails = "Request: ${requestName}, Status: ${status}, Error: ${errorMessage}, Response Message: ${responseMessage}, Failure Message: ${failureMessage}"
-                            echo errorDetails
-                            failureFound = true
+
+                    if (responseTimeIndex == -1) {
+                        error("The 'elapsed' column is not found in the results file. Please ensure the JMeter test plan outputs response time.")
+                    }
+
+                    for (int i = 1; i < results.size(); i++) {
+                        def line = results[i]
+                        if (line.trim()) { // Skip empty lines
+                            def columns = line.split(',')
+                            def elapsedTime = columns[responseTimeIndex]?.toInteger()
+
+                            if (elapsedTime > MAX_RESPONSE_TIME_MS) {
+                                echo "Request exceeded maximum response time: ${elapsedTime} ms (Threshold: ${MAX_RESPONSE_TIME_MS} ms)"
+                                failureFound = true
+                            }
                         }
                     }
+
                     if (failureFound) {
-                        error("Pipeline terminated due to API failure. See the logs for details.")
+                        error("Pipeline terminated due to response times exceeding the maximum threshold.")
                     } else {
-                        echo 'All APIs passed successfully.'
+                        echo 'All requests completed within the acceptable response time.'
                     }
                 }
             }
@@ -83,7 +73,7 @@ pipeline {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Please check the logs.'
+            echo 'Pipeline failed. Please check the logs for details.'
         }
     }
 }
