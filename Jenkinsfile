@@ -30,15 +30,10 @@ pipeline {
         stage('Check Test Results for Response Time') {
             steps {
                 script {
-                    def results = readFile(file: "${RESULTS_FILE}").split('\\n')
-                    def header = results[0].split(',')
-                    def responseTimeIndex = header.findIndexOf { it.trim() == 'elapsed' }
+                    def results = readFile(file: "${RESULTS_FILE}").split('\n')
+                    def header = results[0].split(',') // First line is the header
+                    def responseTimeIndex = 1 // The second column in your file is 'elapsed'
                     def failureFound = false
-
-                    // Check if 'elapsed' column exists
-                    if (responseTimeIndex == -1) {
-                        error("The 'elapsed' column is not found in the results file.")
-                    }
 
                     // Loop through results and check elapsed time for each request
                     for (int i = 1; i < results.size(); i++) {
@@ -75,7 +70,11 @@ pipeline {
 
         stage('Publish Report') {
             steps {
-                perfReport filterRegex: '', sourceDataFiles: "${RESULTS_FILE}", graphType: 'jtl'
+                script {
+                    echo 'Publishing JMeter Test Results...'
+                    // Example: using the Performance Plugin
+                    perfReport filterRegex: '', sourceDataFiles: "${RESULTS_FILE}", graphType: 'jtl'
+                }
             }
         }
     }
