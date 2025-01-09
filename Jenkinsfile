@@ -41,7 +41,7 @@ pipeline {
                         echo "Connection to localhost:5555 is successful!"
                         if (failedRequests) {
                             echo "Failed API Requests (detailed info):"
-                            failedRequests.each { request ->
+                            failedRequests.each { request -> 
                                 def columns = request.split(",")
                                 def requestName = columns[0]  // Assuming request name or URL is the first column
                                 def status = columns[1]  // Assuming status is in the second column
@@ -65,7 +65,7 @@ pipeline {
         stage('Run JMeter Tests') {
             steps {
                 bat """
-                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -JDuration=1 -Jusers=3 -Jserver.host=${LOCAL_IP}
+                    "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -Jusers=3 -Jserver.host=${LOCAL_IP} -f
                 """
             }
         }
