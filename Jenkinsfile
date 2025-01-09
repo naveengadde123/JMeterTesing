@@ -5,7 +5,7 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        MAX_EXECUTION_TIME = 30000 // Set the maximum allowed time in milliseconds (30 seconds)
+        MAX_EXECUTION_TIME = '30000'
     }
 
     stages {
