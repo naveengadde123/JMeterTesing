@@ -30,7 +30,7 @@ pipeline {
                     echo "Total API test execution time: ${duration} ms"
 
                     // Ensure duration is compared as Long
-                    if (duration > Long.parseLong(MAX_EXECUTION_TIME.toString())) {
+                    if (duration < Long.parseLong(MAX_EXECUTION_TIME.toString())) {
                         error "Test execution time exceeded the maximum allowed time of ${MAX_EXECUTION_TIME} ms. Terminating the pipeline."
                     }
                 }
