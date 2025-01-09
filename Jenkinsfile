@@ -45,10 +45,11 @@ pipeline {
                                 def columns = request.split(",")
                                 def requestName = columns[0]  // Assuming request name or URL is the first column
                                 def status = columns[1]  // Assuming status is in the second column
-                                def responseTime = columns[2]  // Assuming response time is in the third column
-                                def errorMessage = columns[3]  // Assuming error message is in the fourth column
+                                def errorMessage = columns[3]  // Assuming error message is in the third column
+                                def responseMessage = columns[4]  // Assuming response message is in the fourth column
+                                def failureMessage = columns[5]  // Assuming failure message is in the fifth column
 
-                                echo "Request: ${requestName}, Status: ${status}, Response Time: ${responseTime}ms, Error: ${errorMessage}"
+                                echo "Request: ${requestName}, Status: ${status}, Error: ${errorMessage}, Response Message: ${responseMessage}, Failure Message: ${failureMessage}"
                             }
                             error "JMeter test execution failed due to API errors."
                         } else {
@@ -79,16 +80,16 @@ pipeline {
                             def apiDetails = line.split(',')
                             def requestName = apiDetails[0]
                             def status = apiDetails[1]
-                            def responseTime = apiDetails[2]
                             def errorMessage = apiDetails[3]
-                            def errorDetails = "API: ${requestName} | Status: ${status} | Response Time: ${responseTime}ms | Error: ${errorMessage}"
-                            writeFile(file: "${ERROR_LOG}", text: errorDetails)
+                            def responseMessage = apiDetails[4]
+                            def failureMessage = apiDetails[5]
+                            def errorDetails = "Request: ${requestName}, Status: ${status}, Error: ${errorMessage}, Response Message: ${responseMessage}, Failure Message: ${failureMessage}"
                             echo errorDetails
                             failureFound = true
                         }
                     }
                     if (failureFound) {
-                        error("Pipeline terminated due to API failure. See the error log for details.")
+                        error("Pipeline terminated due to API failure. See the logs for details.")
                     } else {
                         echo 'All APIs passed successfully.'
                     }
