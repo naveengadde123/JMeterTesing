@@ -11,22 +11,56 @@ pipeline {
         stage('Run JMeter Tests') {
             steps {
                 script {
-                    // Record the start time
-                    def startTime = System.currentTimeMillis()
-
                     // Run the JMeter test
                     bat """
                         "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -f
                     """
+                }
+            }
+        }
 
-                    // Record the end time
-                    def endTime = System.currentTimeMillis()
+        stage('Find Slowest API Request') {
+            steps {
+                script {
+                    // Read the results file
+                    def results = readFile(file: "${RESULTS_FILE}").split('\n')
+                    def header = results[0].split(',')
+                    def elapsedIndex = header.findIndexOf { it.trim() == 'elapsed' }
+                    def urlIndex = header.findIndexOf { it.trim() == 'URL' }
 
-                    // Calculate the total time taken
-                    def duration = endTime - startTime
+                    if (elapsedIndex == -1 || urlIndex == -1) {
+                        error("The 'elapsed' or 'URL' columns are not found in the results file.")
+                    }
 
-                    // Print the total time to the console
-                    echo "Total API test execution time: ${duration} ms"
+                    def maxElapsedTime = 0
+                    def slowestApi = ''
+                    
+                    // Loop through the results and find the slowest API request
+                    for (int i = 1; i < results.size(); i++) {
+                        def line = results[i]
+                        if (line.trim()) {
+                            def columns = line.split(',')
+                            def elapsedTime = columns[elapsedIndex]?.trim()
+                            def apiUrl = columns[urlIndex]?.trim()
+
+                            // Convert elapsedTime to integer
+                            try {
+                                elapsedTime = Integer.parseInt(elapsedTime)
+                            } catch (Exception e) {
+                                echo "Invalid elapsed time at line ${i}: ${columns[elapsedIndex]}"
+                                continue
+                            }
+
+                            // Find the maximum elapsed time and corresponding URL
+                            if (elapsedTime > maxElapsedTime) {
+                                maxElapsedTime = elapsedTime
+                                slowestApi = apiUrl
+                            }
+                        }
+                    }
+
+                    // Output the slowest API and its response time
+                    echo "The slowest API request is: ${slowestApi} with a response time of ${maxElapsedTime} ms"
                 }
             }
         }
