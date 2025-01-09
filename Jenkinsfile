@@ -10,7 +10,7 @@ pipeline {
         RESULTS_FILE = 'C:/Training/results.jtl'
         LOCAL_IP = '127.0.0.1'
         LOCAL_PORT = 5555
-        MAX_EXECUTION_TIME = 10000 // Set the maximum allowed time in milliseconds (5 seconds)
+        MAX_EXECUTION_TIME = 10000
     }
 
     stages {
@@ -40,24 +40,18 @@ pipeline {
         stage('Run JMeter Tests') {
             steps {
                 script {
-                    // Record the start time
                     def startTime = System.currentTimeMillis()
 
-                    // Run the JMeter test
                     bat """
                         "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -Jusers=3 -Jserver.host=${LOCAL_IP} -f
                     """
 
-                    // Record the end time
                     def endTime = System.currentTimeMillis()
 
-                    // Calculate the total time taken
                     def duration = endTime - startTime
 
-                    // Print the total time to the console
                     echo "Total API test execution time: ${duration} ms"
 
-                    // Ensure duration is compared as Long
                     if (duration > Long.parseLong(MAX_EXECUTION_TIME.toString())) {
                         error "Test execution time exceeded the maximum allowed time of ${MAX_EXECUTION_TIME} ms. Terminating the pipeline."
                     }
