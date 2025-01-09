@@ -5,62 +5,34 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
+        MAX_EXECUTION_TIME = 30000 // Set the maximum allowed time in milliseconds (30 seconds)
     }
 
     stages {
         stage('Run JMeter Tests') {
             steps {
                 script {
+                    // Record the start time
+                    def startTime = System.currentTimeMillis()
+
                     // Run the JMeter test
                     bat """
                         "${JMETER_HOME}/bin/jmeter.bat" -n -t "${JMX_FILE}" -l "${RESULTS_FILE}" -f
                     """
-                }
-            }
-        }
 
-        stage('Find Slowest API Request') {
-            steps {
-                script {
-                    // Read the results file
-                    def results = readFile(file: "${RESULTS_FILE}").split('\n')
-                    def header = results[0].split(',')
-                    def elapsedIndex = header.findIndexOf { it.trim() == 'elapsed' }
-                    def urlIndex = header.findIndexOf { it.trim() == 'URL' }
+                    // Record the end time
+                    def endTime = System.currentTimeMillis()
 
-                    if (elapsedIndex == -1 || urlIndex == -1) {
-                        error("The 'elapsed' or 'URL' columns are not found in the results file.")
+                    // Calculate the total time taken
+                    def duration = endTime - startTime
+
+                    // Print the total time to the console
+                    echo "Total API test execution time: ${duration} ms"
+
+                    // Compare the duration with the maximum allowed time
+                    if (duration >= MAX_EXECUTION_TIME) {
+                        error "Test execution time exceeded the maximum allowed time of ${MAX_EXECUTION_TIME} ms. Terminating the pipeline."
                     }
-
-                    def maxElapsedTime = 0
-                    def slowestApi = ''
-                    
-                    // Loop through the results and find the slowest API request
-                    for (int i = 1; i < results.size(); i++) {
-                        def line = results[i]
-                        if (line.trim()) {
-                            def columns = line.split(',')
-                            def elapsedTime = columns[elapsedIndex]?.trim()
-                            def apiUrl = columns[urlIndex]?.trim()
-
-                            // Convert elapsedTime to integer
-                            try {
-                                elapsedTime = Integer.parseInt(elapsedTime)
-                            } catch (Exception e) {
-                                echo "Invalid elapsed time at line ${i}: ${columns[elapsedIndex]}"
-                                continue
-                            }
-
-                            // Find the maximum elapsed time and corresponding URL
-                            if (elapsedTime > maxElapsedTime) {
-                                maxElapsedTime = elapsedTime
-                                slowestApi = apiUrl
-                            }
-                        }
-                    }
-
-                    // Output the slowest API and its response time
-                    echo "The slowest API request is: ${slowestApi} with a response time of ${maxElapsedTime} ms"
                 }
             }
         }
@@ -68,10 +40,10 @@ pipeline {
 
     post {
         success {
-            echo 'Test completed successfully!'
+            echo 'Test completed successfully within the allowed time!'
         }
         failure {
-            echo 'Test failed.'
+            echo 'Test failed or execution time exceeded the maximum limit.'
         }
     }
 }
