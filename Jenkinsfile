@@ -29,11 +29,8 @@ pipeline {
                     // Print the total time to the console
                     echo "Total API test execution time: ${duration} ms"
 
-                    // Convert duration to Long (if not already a long type)
-                    duration = Long.parseLong(duration.toString())
-
-                    // Compare the duration with the maximum allowed time
-                    if (duration > MAX_EXECUTION_TIME) {
+                    // Ensure duration is compared as Long
+                    if (duration > Long.parseLong(MAX_EXECUTION_TIME.toString())) {
                         error "Test execution time exceeded the maximum allowed time of ${MAX_EXECUTION_TIME} ms. Terminating the pipeline."
                     }
                 }
