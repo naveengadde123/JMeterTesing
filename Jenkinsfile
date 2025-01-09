@@ -39,12 +39,16 @@ pipeline {
                         error("The 'elapsed' column is not found in the results file.")
                     }
 
+                    echo "Header: ${header.join(', ')}"
+                    echo "Response time index: ${responseTimeIndex}"
+
                     for (int i = 1; i < results.size(); i++) {
                         def line = results[i]
                         if (line.trim()) {
                             def columns = line.split(',')
                             def elapsedTime = columns[responseTimeIndex]?.toInteger()
 
+                            echo "Checking elapsed time: ${elapsedTime} ms"
                             if (elapsedTime > MAX_RESPONSE_TIME_MS) {
                                 echo "Request exceeded maximum response time: ${elapsedTime} ms (Threshold: ${MAX_RESPONSE_TIME_MS} ms)"
                                 failureFound = true
