@@ -45,10 +45,12 @@ pipeline {
                         def line = results[i]
                         if (line.trim()) {
                             def columns = line.split(',')
-                            def elapsedTime = columns[responseTimeIndex]?.toInteger()
+                            def elapsedTime = columns[responseTimeIndex]?.trim()
 
-                            // Handle non-numeric or invalid data in 'elapsed' column
-                            if (elapsedTime == null) {
+                            // Convert elapsedTime to integer
+                            try {
+                                elapsedTime = Integer.parseInt(elapsedTime)
+                            } catch (Exception e) {
                                 echo "Invalid elapsed time at line ${i}: ${columns[responseTimeIndex]}"
                                 continue
                             }
