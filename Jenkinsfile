@@ -8,7 +8,7 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        MAX_RESPONSE_TIME_MS = 120000
+        MAX_RESPONSE_TIME_MS = 30000 
     }
 
     stages {
@@ -35,20 +35,25 @@ pipeline {
                     def responseTimeIndex = header.findIndexOf { it.trim() == 'elapsed' }
                     def failureFound = false
 
+                    // Check if 'elapsed' column exists
                     if (responseTimeIndex == -1) {
                         error("The 'elapsed' column is not found in the results file.")
                     }
 
-                    echo "Header: ${header.join(', ')}"
-                    echo "Response time index: ${responseTimeIndex}"
-
+                    // Loop through results and check elapsed time for each request
                     for (int i = 1; i < results.size(); i++) {
                         def line = results[i]
                         if (line.trim()) {
                             def columns = line.split(',')
                             def elapsedTime = columns[responseTimeIndex]?.toInteger()
 
-                            echo "Checking elapsed time: ${elapsedTime} ms"
+                            // Handle non-numeric or invalid data in 'elapsed' column
+                            if (elapsedTime == null) {
+                                echo "Invalid elapsed time at line ${i}: ${columns[responseTimeIndex]}"
+                                continue
+                            }
+
+                            // Check if elapsed time is greater than the threshold
                             if (elapsedTime > MAX_RESPONSE_TIME_MS) {
                                 echo "Request exceeded maximum response time: ${elapsedTime} ms (Threshold: ${MAX_RESPONSE_TIME_MS} ms)"
                                 failureFound = true
@@ -56,6 +61,7 @@ pipeline {
                         }
                     }
 
+                    // Terminate pipeline if any request exceeds the max response time
                     if (failureFound) {
                         error("Max time reached: Response times exceeded the threshold of ${MAX_RESPONSE_TIME_MS} ms.")
                     } else {
