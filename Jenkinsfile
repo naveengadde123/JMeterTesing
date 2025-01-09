@@ -8,7 +8,7 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        MAX_RESPONSE_TIME_MS = 10000 // 10 seconds in milliseconds
+        MAX_RESPONSE_TIME_MS = 10000
     }
 
     stages {
@@ -32,16 +32,16 @@ pipeline {
                 script {
                     def results = readFile(file: "${RESULTS_FILE}").split('\\n')
                     def header = results[0].split(',')
-                    def responseTimeIndex = header.findIndexOf { it.trim() == 'elapsed' } 
+                    def responseTimeIndex = header.findIndexOf { it.trim() == 'elapsed' }
                     def failureFound = false
 
                     if (responseTimeIndex == -1) {
-                        error("The 'elapsed' column is not found in the results file. Please ensure the JMeter test plan outputs response time.")
+                        error("The 'elapsed' column is not found in the results file.")
                     }
 
                     for (int i = 1; i < results.size(); i++) {
                         def line = results[i]
-                        if (line.trim()) { // Skip empty lines
+                        if (line.trim()) {
                             def columns = line.split(',')
                             def elapsedTime = columns[responseTimeIndex]?.toInteger()
 
@@ -53,7 +53,7 @@ pipeline {
                     }
 
                     if (failureFound) {
-                        error("Pipeline terminated due to response times exceeding the maximum threshold.")
+                        error("Max time reached: Response times exceeded the threshold of ${MAX_RESPONSE_TIME_MS} ms.")
                     } else {
                         echo 'All requests completed within the acceptable response time.'
                     }
@@ -73,7 +73,7 @@ pipeline {
             echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Please check the logs for details.'
+            echo 'Pipeline failed. Max time reached for one or more requests.'
         }
     }
 }
