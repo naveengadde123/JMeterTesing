@@ -7,7 +7,7 @@ pipeline {
         CREDENTIALS_ID = '1d54e951-e865-4582-a541-e726548cfefd'
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
-        RESULTS_FILE = 'C:/Training/results.xml'
+        RESULTS_FILE = 'C:/Training/results.jtl'
         ERROR_LOG = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/jmeter.log'
         LOCAL_IP = '127.0.0.1'
         LOCAL_PORT = 5555
@@ -40,13 +40,15 @@ pipeline {
                     if (connectionResult.contains('TcpTestSucceeded : True')) {
                         echo "Connection to localhost:5555 is successful!"
                         if (failedRequests) {
-                            echo "Failed API Requests:"
+                            echo "Failed API Requests (detailed info):"
                             failedRequests.each { request ->
                                 def columns = request.split(",")
-                                def requestName = columns[0]  
-                                def status = columns[1]  
-                                def errorMessage = columns[2]  
-                                echo "Request: ${requestName}, Status: ${status}, Error: ${errorMessage}"
+                                def requestName = columns[0]  // Assuming request name or URL is the first column
+                                def status = columns[1]  // Assuming status is in the second column
+                                def responseTime = columns[2]  // Assuming response time is in the third column
+                                def errorMessage = columns[3]  // Assuming error message is in the fourth column
+
+                                echo "Request: ${requestName}, Status: ${status}, Response Time: ${responseTime}ms, Error: ${errorMessage}"
                             }
                             error "JMeter test execution failed due to API errors."
                         } else {
@@ -73,10 +75,15 @@ pipeline {
                     def results = readFile(file: "${RESULTS_FILE}").split('\\n')
                     def failureFound = false
                     for (line in results) {
-                        if (line.contains('false')) {
+                        if (line.contains('false') || line.contains('500') || line.contains('404')) {
                             def apiDetails = line.split(',')
-                            def errorDetails = "API: ${apiDetails[2]} | Reason: ${apiDetails[4]}"
+                            def requestName = apiDetails[0]
+                            def status = apiDetails[1]
+                            def responseTime = apiDetails[2]
+                            def errorMessage = apiDetails[3]
+                            def errorDetails = "API: ${requestName} | Status: ${status} | Response Time: ${responseTime}ms | Error: ${errorMessage}"
                             writeFile(file: "${ERROR_LOG}", text: errorDetails)
+                            echo errorDetails
                             failureFound = true
                         }
                     }
