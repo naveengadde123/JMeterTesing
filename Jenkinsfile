@@ -9,7 +9,8 @@ pipeline {
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'  // Path to the .jmx file
         RESULTS_FILE = 'C:/Training/results.jtl'  // Path to store the results
         ERROR_LOG = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/jmeter.log'  // Path to store error details
-        LOCAL_IP = '192.168.1.161'  // Replace with your local IP address
+        LOCAL_IP = '127.0.0.1'  // Use your IP if needed
+        LOCAL_PORT = 5555  // Port to check
     }
 
     stages {
@@ -17,6 +18,30 @@ pipeline {
             steps {
                 echo 'Cloning the Git repository...'
                 git branch: "${BRANCH}", url: "${GIT_REPO}", credentialsId: "${CREDENTIALS_ID}"
+            }
+        }
+
+        stage('Check Connection to Localhost') {
+            steps {
+                echo 'Checking connection to localhost:5555...'
+                script {
+                    try {
+                        def connectionResult = bat(script: """
+                            powershell -Command "Test-NetConnection -ComputerName localhost -Port ${LOCAL_PORT}"
+                        """, returnStdout: true).trim()
+
+                        echo "Connection Test Result: ${connectionResult}"
+
+                        // Check if the test result indicates successful connection
+                        if (connectionResult.contains('TcpTestSucceeded : True')) {
+                            echo "Connection to localhost:5555 is successful!"
+                        } else {
+                            error "Failed to connect to localhost:5555"
+                        }
+                    } catch (Exception e) {
+                        error "Connection to localhost:5555 failed: ${e.message}"
+                    }
+                }
             }
         }
 
