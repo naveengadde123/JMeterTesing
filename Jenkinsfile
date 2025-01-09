@@ -5,7 +5,7 @@ pipeline {
         JMETER_HOME = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3'
         JMX_FILE = 'C:/JMeter/apache-jmeter-5.6.3/apache-jmeter-5.6.3/bin/Test.jmx'
         RESULTS_FILE = 'C:/Training/results.jtl'
-        MAX_EXECUTION_TIME = '30000'
+        MAX_EXECUTION_TIME = 30000 // Set the maximum allowed time in milliseconds (30 seconds)
     }
 
     stages {
@@ -28,6 +28,9 @@ pipeline {
 
                     // Print the total time to the console
                     echo "Total API test execution time: ${duration} ms"
+
+                    // Convert duration to Long (if not already a long type)
+                    duration = Long.parseLong(duration.toString())
 
                     // Compare the duration with the maximum allowed time
                     if (duration >= MAX_EXECUTION_TIME) {
